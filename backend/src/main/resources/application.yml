@@ -1,0 +1,41 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/flakespy
+    username: postgres
+    password: ${DB_PASSWORD}            # loaded from application-local.yml
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  task:
+    scheduling:
+      pool:
+        size: 5
+
+groq:
+  api:
+    key: ${GROQ_API_KEY}                # loaded from application-local.yml
+    url: https://api.groq.com/openai/v1/chat/completions
+    model: llama3-8b-8192
+
+gitlab:
+  api:
+    base-url: https://gitlab.com/api/v4
+
+flakespy:
+  scheduler:
+    cron: "0 0 6 * * *"
+  analysis:
+    lookback-days: 30
+    min-runs: 5
+    
