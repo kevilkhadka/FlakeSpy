@@ -3,11 +3,12 @@
 > Automatically detects flaky tests in your nightly GitLab CI pipeline — no branch push required.
 
 ![Java](https://img.shields.io/badge/Java-17-orange?style=flat-square&logo=java)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen?style=flat-square&logo=springboot)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.3-brightgreen?style=flat-square&logo=springboot)
 ![React](https://img.shields.io/badge/React-18-blue?style=flat-square&logo=react)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791?style=flat-square&logo=postgresql)
 ![Groq AI](https://img.shields.io/badge/Groq-LLaMA3-purple?style=flat-square)
 ![GitLab](https://img.shields.io/badge/GitLab-CI%2FCD-FC6D26?style=flat-square&logo=gitlab)
+![Vite](https://img.shields.io/badge/Vite-5.x-646CFF?style=flat-square&logo=vite)
 
 ---
 
@@ -20,10 +21,11 @@ Flaky tests are the silent killers of QA confidence. A test that passes sometime
 FlakeSpy connects to your GitLab project using a personal access token, pulls the JUnit XML artifacts from your nightly CI pipeline automatically every morning, and builds a living picture of your test suite health:
 
 - 🏆 **Flakiness leaderboard** — ranked list of your most unreliable tests
-- 📈 **Trend tracking** — is your suite getting better or worse over time?
-- 🤖 **AI root cause classification** — timing issue? data dependency? locator problem?
+- 📈 **30-night trend chart** — pass/fail history + duration over time
+- 🤖 **AI root cause classification** — timing? locator? data dependency?
 - 🔧 **Fix suggestions** — specific, actionable advice per flaky test
 - 🔄 **Fully automatic** — no CI changes, no push to main, just a GitLab personal token
+- 🔍 **Test detail page** — deep dive into any test's full history and AI analysis
 
 ---
 
@@ -31,14 +33,15 @@ FlakeSpy connects to your GitLab project using a personal access token, pulls th
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 18, Axios, TailwindCSS, Recharts |
-| Backend | Java 17, Spring Boot 3.x |
+| Frontend | React 18, Vite 5, Axios, Recharts |
+| Backend | Java 17, Spring Boot 3.2.3 |
 | AI Engine | Groq API (LLaMA 3) |
 | Database | PostgreSQL 15 |
 | GitLab Integration | GitLab REST API v4 |
 | Scheduler | Spring `@Scheduled` (runs at 6am daily) |
+| XML Parsing | JAXB / Java DOM Parser |
+| ZIP Extraction | Apache Commons Compress |
 | Build | Maven |
-| Containerization | Docker + Docker Compose |
 
 ---
 
@@ -46,59 +49,55 @@ FlakeSpy connects to your GitLab project using a personal access token, pulls th
 ```
 flakespy/
 ├── backend/
-│   ├── src/
-│   │   ├── main/
-│   │   │   ├── java/com/flakespy/
-│   │   │   │   ├── controller/
-│   │   │   │   │   ├── GitLabController.java
-│   │   │   │   │   ├── TestController.java
-│   │   │   │   │   └── DashboardController.java
-│   │   │   │   ├── service/
-│   │   │   │   │   ├── GitLabService.java
-│   │   │   │   │   ├── XmlParserService.java
-│   │   │   │   │   ├── FlakinessAnalyserService.java
-│   │   │   │   │   ├── GroqAIService.java
-│   │   │   │   │   └── NightlyScheduler.java
-│   │   │   │   ├── model/
-│   │   │   │   │   ├── TestResult.java
-│   │   │   │   │   ├── TestRun.java
-│   │   │   │   │   └── GitLabProject.java
-│   │   │   │   ├── repository/
-│   │   │   │   │   ├── TestResultRepository.java
-│   │   │   │   │   ├── TestRunRepository.java
-│   │   │   │   │   └── GitLabProjectRepository.java
-│   │   │   │   ├── dto/
-│   │   │   │   │   ├── GitLabConnectRequest.java
-│   │   │   │   │   ├── FlakyTestSummary.java
-│   │   │   │   │   └── TestAnalysis.java
-│   │   │   │   └── config/
-│   │   │   │       └── CorsConfig.java
-│   │   │   └── resources/
-│   │   │       ├── application.yml
-│   │   │       └── schema.sql
+│   ├── src/main/java/com/flakespy/
+│   │   ├── controller/
+│   │   │   ├── GitLabController.java
+│   │   │   ├── TestController.java
+│   │   │   └── DashboardController.java
+│   │   ├── service/
+│   │   │   ├── GitLabService.java
+│   │   │   ├── XmlParserService.java
+│   │   │   ├── FlakinessAnalyserService.java
+│   │   │   ├── GroqAIService.java
+│   │   │   └── NightlyScheduler.java
+│   │   ├── model/
+│   │   │   ├── GitLabProject.java
+│   │   │   ├── TestRun.java
+│   │   │   └── TestResult.java
+│   │   ├── repository/
+│   │   │   ├── GitLabProjectRepository.java
+│   │   │   ├── TestRunRepository.java
+│   │   │   └── TestResultRepository.java
+│   │   ├── dto/
+│   │   │   ├── GitLabConnectRequest.java
+│   │   │   ├── FlakyTestSummary.java
+│   │   │   ├── TestAnalysis.java
+│   │   │   └── DashboardSummary.java
+│   │   ├── config/
+│   │   │   └── CorsConfig.java
+│   │   └── FlakespyApplication.java
+│   ├── src/main/resources/
+│   │   ├── application.yml
+│   │   └── application-local.yml   ← gitignored, your secrets
 │   └── pom.xml
 │
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── GitLabConnect.jsx
+│   │   │   ├── SuiteHealthBadge.jsx
 │   │   │   ├── FlakyLeaderboard.jsx
-│   │   │   ├── TrendChart.jsx
-│   │   │   ├── RootCauseCard.jsx
-│   │   │   └── SuiteHealthBadge.jsx
+│   │   │   └── TrendChart.jsx
 │   │   ├── pages/
 │   │   │   ├── Dashboard.jsx
 │   │   │   └── TestDetail.jsx
 │   │   ├── api/
 │   │   │   └── flakespyApi.js
-│   │   ├── utils/
-│   │   │   └── flakinessScore.js
 │   │   ├── App.jsx
-│   │   └── main.jsx
-│   ├── public/
+│   │   ├── main.jsx
+│   │   └── index.css
 │   └── package.json
 │
-├── docker-compose.yml
 ├── .gitignore
 └── README.md
 ```
@@ -110,8 +109,8 @@ flakespy/
 ### Prerequisites
 
 - Java 17+
-- Node.js 18+
-- PostgreSQL 15+ (or use Docker)
+- Node.js 20+
+- PostgreSQL 15+
 - Maven 3.8+
 - A free [Groq API key](https://console.groq.com)
 - A GitLab personal access token with `read_api` scope
@@ -127,34 +126,22 @@ flakespy/
 
 ### 2. Clone the repository
 ```bash
-git clone https://github.com/kevilkhadka/flakespy.git
+git clone https://github.com/YOUR_USERNAME/flakespy.git
 cd flakespy
 ```
 
 ### 3. Set up the database
 ```bash
-psql -U postgres -c "CREATE DATABASE flakespy;"
+psql -U your_username -d postgres -c "CREATE DATABASE flakespy;"
 ```
 
 ### 4. Configure the backend
 
-Edit `backend/src/main/resources/application.yml`:
+Create `backend/src/main/resources/application-local.yml` — this file is gitignored:
 ```yaml
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/flakespy
-    username: postgres
-    password: your_password_here
-
-groq:
-  api:
-    key: your_groq_api_key_here
-    url: https://api.groq.com/openai/v1/chat/completions
-    model: llama3-8b-8192
-
-flakespy:
-  scheduler:
-    cron: "0 0 6 * * *"
+DB_USERNAME: your_postgres_username
+DB_PASSWORD:
+GROQ_API_KEY: your_groq_api_key
 ```
 
 ### 5. Run the backend
@@ -163,6 +150,8 @@ cd backend
 mvn spring-boot:run
 ```
 
+Spring Boot auto-creates all 3 PostgreSQL tables on first run. Backend starts on `http://localhost:8080`.
+
 ### 6. Run the frontend
 ```bash
 cd frontend
@@ -170,17 +159,18 @@ npm install
 npm run dev
 ```
 
+Frontend starts on `http://localhost:5173`.
+
 ### 7. Connect your GitLab project
 
-Open `http://localhost:5173`, click **Connect GitLab**, and enter:
-- Your GitLab project ID (found in **Settings → General**)
-- Your personal access token
-- The CI job name that produces XML artifacts (e.g. `test`, `run-tests`)
+Open `http://localhost:5173` and fill in the connect form:
+- **GitLab project ID** — found in GitLab → Settings → General
+- **Project name** — any display name you choose
+- **Personal access token** — the `read_api` token you created
+- **CI job name** — the job in your `.gitlab-ci.yml` that produces XML artifacts
+- **GitLab URL** — `https://gitlab.com` or your self-hosted URL
 
-### 8. (Optional) Run with Docker
-```bash
-docker-compose up --build
-```
+FlakeSpy immediately pulls your last 30 nightly runs and builds your first flakiness report.
 
 ---
 
@@ -188,58 +178,45 @@ docker-compose up --build
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `POST` | `/api/gitlab/connect` | Save GitLab token + project ID |
-| `POST` | `/api/gitlab/sync` | Manually trigger artifact pull now |
-| `GET` | `/api/tests/flaky` | Get flakiness leaderboard (top 20) |
-| `GET` | `/api/tests/{name}/history` | Full 30-night history for one test |
-| `GET` | `/api/tests/{name}/analysis` | AI root cause + fix suggestions |
-| `GET` | `/api/dashboard/summary` | Overall suite health stats |
-
-### Example — Leaderboard response
-```json
-[
-  {
-    "testName": "loginWithGoogleOAuthTest",
-    "className": "com.app.tests.AuthTest",
-    "flakinessScore": 0.57,
-    "totalRuns": 30,
-    "failures": 17,
-    "lastFailure": "2025-03-13T02:14:33",
-    "failurePattern": "Fails consistently between 2am-3am",
-    "rootCause": "TIMING",
-    "fixSuggestion": "Replace Thread.sleep(2000) with explicit wait for element visibility"
-  }
-]
-```
+| `POST` | `/api/gitlab/connect` | Connect a GitLab project |
+| `POST` | `/api/gitlab/sync/{id}` | Manually trigger artifact pull |
+| `GET` | `/api/gitlab/projects` | List connected projects |
+| `DELETE` | `/api/gitlab/projects/{id}` | Disconnect a project |
+| `GET` | `/api/tests/flaky?projectId=1` | Flakiness leaderboard |
+| `GET` | `/api/tests/{name}/history` | 30-night pass/fail history |
+| `GET` | `/api/tests/{name}/analysis` | AI root cause + fix suggestion |
+| `GET` | `/api/dashboard/summary?projectId=1` | Suite health summary |
 
 ---
 
 ## 🔍 How the GitLab API integration works
+
+FlakeSpy uses the **GitLab REST API v4** — no pipeline changes needed:
 ```
 GET /api/v4/projects/:id/jobs?scope=success
 Authorization: Bearer YOUR_PERSONAL_TOKEN
 ```
 
-Then for each nightly job:
+Then downloads artifacts for each nightly job:
 ```
 GET /api/v4/projects/:id/jobs/:job_id/artifacts
 ```
 
-Downloads the artifact ZIP, extracts JUnit XML, feeds into the parser. `NightlyScheduler` runs this at 6am daily — after your nightly pipeline finishes.
+`NightlyScheduler` runs this automatically every morning at 6am after your nightly pipeline finishes. You can also trigger a manual sync anytime from the dashboard.
 
 ---
 
 ## 🧠 Flakiness score explained
 ```
-flakiness_score = number_of_status_flips / (total_runs - 1)
+flakiness_score = status_flips / (total_runs - 1)
 ```
 
 | Score | Label | Action |
 |---|---|---|
-| 0.0 – 0.2 | Stable | No action needed |
-| 0.2 – 0.5 | Unstable | Monitor closely |
-| 0.5 – 0.8 | Flaky | Fix soon |
-| 0.8 – 1.0 | Broken | Fix immediately |
+| 0.0 – 0.2 | 🟢 Stable | No action needed |
+| 0.2 – 0.5 | 🟡 Unstable | Monitor closely |
+| 0.5 – 0.8 | 🟠 Flaky | Fix soon |
+| 0.8 – 1.0 | 🔴 Broken | Fix immediately |
 
 ---
 
@@ -248,9 +225,9 @@ flakiness_score = number_of_status_flips / (total_runs - 1)
 | Category | Typical symptom |
 |---|---|
 | `TIMING` | `TimeoutException`, `StaleElementException` |
-| `DATA_DEPENDENCY` | Fails after another test runs, passes in isolation |
 | `LOCATOR` | `NoSuchElementException` intermittently |
-| `NETWORK` | Connection timeouts, SauceLabs session drops |
+| `DATA_DEPENDENCY` | Fails after another test, passes in isolation |
+| `NETWORK` | Connection timeouts, session drops |
 | `CONCURRENCY` | Fails in parallel runs only |
 | `ENVIRONMENT` | Fails on specific device/OS only |
 
@@ -258,25 +235,30 @@ flakiness_score = number_of_status_flips / (total_runs - 1)
 
 ## 🗺️ Roadmap
 
-- [x] Project setup and architecture design
-- [ ] Spring Boot skeleton + PostgreSQL
-- [ ] GitLab API integration
-- [ ] JUnit XML parser
-- [ ] Flakiness score engine
-- [ ] NightlyScheduler
-- [ ] Groq AI root cause classification
-- [ ] REST API endpoints
-- [ ] React dashboard
-- [ ] GitLab connect UI
-- [ ] Test detail page
-- [ ] Docker Compose
-- [ ] Allure JSON support (Phase 2)
+- [x] Project setup and architecture
+- [x] Spring Boot REST API
+- [x] PostgreSQL — 3 tables auto-created
+- [x] GitLab API integration
+- [x] JUnit XML parser
+- [x] Flakiness score algorithm
+- [x] Nightly scheduler (6am auto-sync)
+- [x] Groq AI root cause classification
+- [x] React frontend
+- [x] GitLab connect form
+- [x] Suite health dashboard
+- [x] Flakiness leaderboard with filters
+- [x] 30-night trend chart
+- [x] Test detail + AI analysis page
+- [ ] Allure JSON format support
+- [ ] Email alerts for new broken tests
+- [ ] Multi-project support
 
 ---
 
 ## 👤 Author
 
-**Kevil** — QA Engineer learning full-stack development  
+**Kevil** — QA Engineer learning full-stack development
+Project 2 of my coding journey | Built from a real pain I face every single night
 
 ---
 
